@@ -10,51 +10,62 @@ use Math::GSL::CDF  qw( :all );
 
 sub draw_alleles{
    my $the_rng = shift;
-   my $maf_distribution = shift; # describes distribution of minor allele frequencies. e.g. 'delta,0.25' (all mafs are 0.25), or 'inv,0.15,0.5' min maf is 0.15, max is 0.5, between prob. is propto 1/maf.
-   my $n_SNPs = shift;           # for each SNP, draw 2 alleles
+   my $mafs = shift;            # array ref, $n_SNPa.
+   my $n_SNPs = scalar @$mafs;  # for each SNP, draw 2 alleles
 
-   # print STDERR "maf distrib:  $maf_distribution \n";
-   my ($distrib, $param1, $param2) = split(',', $maf_distribution);
    my @alleles = ();
-   my $maf = undef;
+
+   for my $amaf (@$mafs) {
+   #   print STDERR "amaf: $amaf \n";
+      push @alleles, ((gsl_rng_uniform($the_rng->raw() ) < $amaf)? 'a' : 'A');
+      push @alleles, ((gsl_rng_uniform($the_rng->raw() ) < $amaf)? 'a' : 'A');
+   }
+   # print STDERR "number of alleles drawn: ", scalar @alleles, "\n";
+ #  print STDERR "alleles: ", join(", ", @alleles), "\n";
+   return \@alleles;
+}
+
+sub draw_mafs{ # return an array ref with $n_snps maf values drawn from distribution specified by $maf.
+   my $the_rng = shift;
+   my $maf_distribution = shift; 
+   my $n_SNPs = shift;
+   my @mafs = ();
+
+   my ($distrib, $param1, $param2) = split(',', $maf_distribution);
    if ($distrib eq 'delta') { # delta function at param1 (param2 ignored if present)
       for (1..$n_SNPs) {
-         $maf = $param1;
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
+         my $maf = $param1;
+         push @mafs, $maf;
       }
    } elsif ($distrib eq 'flat') {
       my ($min, $max) = ($param1 // 0.0, $param2 // 0.5);
       for (1..$n_SNPs) {
-         $maf = $min + gsl_rng_uniform($the_rng->raw()) * ($max - $min);
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
-         #   print STDERR "maf: $maf \n";
+         my $maf = $min + gsl_rng_uniform($the_rng->raw()) * ($max - $min);
+         push @mafs, $maf;
       }
    } elsif ($distrib eq 'inv') { # density propto 1/$maf (0 outside of [$min, $max]
       my ($min, $max) = ($param1 // 0.0, $param2 // 0.5);
       for (1..$n_SNPs) {
-         $maf =  $min * exp(gsl_rng_uniform($the_rng->raw()) * log($max/$min));
-         # $min + gsl_rng_uniform($the_rng->raw()) * ($max - $min);
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
-         push @alleles, (gsl_rng_uniform($the_rng->raw() ) < $maf)? 'a' : 'A';
-         #   print STDERR "maf: $maf \n";
+         my $maf =  $min * exp(gsl_rng_uniform($the_rng->raw()) * log($max/$min));
+         push @mafs, $maf;
       }
    } else {
       die "Unknown minor allele frequence distribution: $distrib \n";
    }
-   # print STDERR "number of alleles drawn: ", scalar @alleles, "\n";
-   return \@alleles;
+ #  print STDERR "mafs array: ", join(", ", @mafs), "\n";
+   return \@mafs;
 }
+
 
 sub draw_genotype_from_population{
    # draw ('a','a'), ('a','A'), etc.
    my $the_rng = shift;
-   my $maf = shift;             # minor allele frequency
-   my $n_snps = shift;
+   my $mafs = shift;            # array ref of maf values     
+   my $n_snps = scalar @$mafs;
    # print STDERR "$the_rng ; $maf ;  $n_snps \n";
    my @genotypes = ();
-   my $alleles = draw_alleles($the_rng, $maf, $n_snps); # a array ref holding 2*$n_snps alleles.
+ #  print STDERR "ZZZ: ", join(", ", @$mafs), "\n";
+   my $alleles = draw_alleles($the_rng, $mafs); # an array ref holding 2*$n_snps alleles.
    for my $i_snp (0..$n_snps-1) {
       my $gt = [$alleles->[2*$i_snp], $alleles->[2*$i_snp + 1]];
       push @genotypes, $gt;
@@ -133,7 +144,19 @@ sub agmr_hgmr{
 }
 
 
-sub print_genotype{
+sub genotype_string{
+   my $gt = shift;
+# print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
+   my $gstring = '';
+   while(my($i, $s) = each @$gt) {
+      my $snp = join('', @$s);
+      $snp = 'aA' if($snp eq 'Aa');
+      $gstring .= $snp;
+   }
+   return $gstring;
+}
+
+sub print_genotypes_in_columns{
    my @gts = @_;
    for my $i ( 0 .. scalar @{$gts[0]}-1 ) {
       for my $agt (@gts) {
@@ -160,4 +183,4 @@ sub print_genotype{
   }
 
 # end of package
-1; 
+1;

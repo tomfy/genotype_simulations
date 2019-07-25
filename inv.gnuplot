@@ -24,6 +24,17 @@ set ylabel 'AGMR' offset 9,0
 
 shape = 5
 
+xmin = 0
+ymin = 0
+plot [xmin:*][ymin:*] \
+	'aDPOinv0.17-.5' using 7:6, 'aPOinv0.17-.5' using 7:6, \
+	'aDFSinv0.17-.5' using 7:6, 'aFSinv0.17-.5' using 7:6, \
+	'aHSinv0.17-.5' using 7:6, 'aGPGCinv0.17-.5' using 7:6, 'aAUNNinv0.17-.5' using 7:6, \
+	'aFCinv0.17-.5' using 7:6,'aHAUNNinv0.17-.5' using 7:6, \
+	'aUNinv0.17-.5' using 7:6
+	#, \
+	# 'aDFSdelta0.5' using 7:6
+pause -1
 # 
 plot \
         'PO_inv0.17-0.5_400' using 7:6 t'Parent offspring' pt shape lc 3, \
