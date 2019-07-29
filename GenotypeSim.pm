@@ -104,26 +104,26 @@ sub agmr_hgmr{
    # encode genotype: 0: AA, 1: aA, 2: aa  i.e. a count of the number of minor alleles present.
    # encode the pair of genotypes as 00, 01, 10, 02, 20, etc.
    my %paircode_count = ();
-   while (my($i, $s1) = each $g1) {
+   while (my($i, $s1) = each @$g1) { # needs to have the '@'; each doesn't work with ref starting with 5.24
       my $s2 = $g2->[$i];       # corresponding snp from sample 2
-      my $ss1 = join("", @$s1);
-      my $ss2 = join("", @$s2);
-      if ($ss1 eq 'aa') {
-         if ($ss2 eq 'aa') {
+    #  my $s1 = join("", @$s1);
+    #  my $ss2 = join("", @$s2);
+      if ($s1 eq 'aa') {
+         if ($s2 eq 'aa') {
             $ad++; $hd++;
             $paircode_count{'22'}++; # aa-aa -> 22
-         } elsif ($ss2 eq 'AA') {
+         } elsif ($s2 eq 'AA') {
             $ad++; $an++; $hd++; $hn++;
             $paircode_count{'20'}++; # aa-AA -> 20
          } else {                    # s2 is heterozygous
             $ad++; $an++;
             $paircode_count{'21'}++; # aa-Aa -> 21
          }
-      } elsif ($ss1 eq 'AA') {
-         if ($ss2 eq 'aa') {
+      } elsif ($s1 eq 'AA') {
+         if ($s2 eq 'aa') {
             $ad++; $an++; $hd++; $hn++;
             $paircode_count{'02'}++;
-         } elsif ($ss2 eq 'AA') {
+         } elsif ($s2 eq 'AA') {
             $ad++; $hd++;
             $paircode_count{'00'}++;
          } else {               # s2 is heterozygous
@@ -131,10 +131,10 @@ sub agmr_hgmr{
             $paircode_count{'01'}++;
          }
       } else {                  # s1 is heterozygous
-         if ($ss2 eq 'aa') {
+         if ($s2 eq 'aa') {
             $ad++; $an++;
             $paircode_count{'12'}++;
-         } elsif ($ss2 eq 'AA') {
+         } elsif ($s2 eq 'AA') {
             $ad++; $an++;
             $paircode_count{'10'}++;
          } else {               # s2 is heterozygous
@@ -179,7 +179,7 @@ sub print_genotypes_in_columns{
            my $g1g2 = $g1 . $g2;
            $str .= sprintf("%4i ", $pc_c->{$g1g2} // 0);
         }
-        $str .= " ";            # "] [";
+        $str .= "  ";            # "] [";
      }
      #$str .= "]";
      return $str;
