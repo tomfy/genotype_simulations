@@ -16,12 +16,12 @@ sub draw_alleles{
    my @alleles = ();
 
    for my $amaf (@$mafs) {
-   #   print STDERR "amaf: $amaf \n";
+      #   print STDERR "amaf: $amaf \n";
       push @alleles, ((gsl_rng_uniform($the_rng->raw() ) < $amaf)? 'a' : 'A');
       push @alleles, ((gsl_rng_uniform($the_rng->raw() ) < $amaf)? 'a' : 'A');
    }
    # print STDERR "number of alleles drawn: ", scalar @alleles, "\n";
- #  print STDERR "alleles: ", join(", ", @alleles), "\n";
+   #  print STDERR "alleles: ", join(", ", @alleles), "\n";
    return \@alleles;
 }
 
@@ -52,50 +52,53 @@ sub draw_mafs{ # return an array ref with $n_snps maf values drawn from distribu
    } else {
       die "Unknown minor allele frequence distribution: $distrib \n";
    }
- #  print STDERR "mafs array: ", join(", ", @mafs), "\n";
+   #  print STDERR "mafs array: ", join(", ", @mafs), "\n";
    return \@mafs;
 }
 
 
-sub draw_genotype_from_population{
-   # draw ('a','a'), ('a','A'), etc.
-   my $the_rng = shift;
-   my $mafs = shift;            # array ref of maf values     
-   my $n_snps = scalar @$mafs;
-   # print STDERR "$the_rng ; $maf ;  $n_snps \n";
-   my @genotypes = ();
- #  print STDERR "ZZZ: ", join(", ", @$mafs), "\n";
-   my $alleles = draw_alleles($the_rng, $mafs); # an array ref holding 2*$n_snps alleles.
-   for my $i_snp (0..$n_snps-1) {
-      my $gt = [$alleles->[2*$i_snp], $alleles->[2*$i_snp + 1]];
-      push @genotypes, $gt;
-   }
-   return \@genotypes;
-}
+# sub draw_genotype_from_population{
+#    # draw ('a','a'), ('a','A'), etc.
+#    my $the_rng = shift;
+#    my $mafs = shift;            # array ref of maf values     
+#    my $n_snps = scalar @$mafs;
+#    # print STDERR "$the_rng ; $maf ;  $n_snps \n";
+#    my @genotypes = ();
+#    #  print STDERR "ZZZ: ", join(", ", @$mafs), "\n";
+#    my $alleles = draw_alleles($the_rng, $mafs); # an array ref holding 2*$n_snps alleles.
+#    for my $i_snp (0..$n_snps-1) {
+#       my $gt = [$alleles->[2*$i_snp], $alleles->[2*$i_snp + 1]];
+#       push @genotypes, $gt;
+#    }
+#    return \@genotypes;
+# }
 
-sub draw_offspring_genotype{
-   my $the_rng = shift; 
-   my $pg1 = shift;             # parent genotype 1
-   my $pg2 = shift;             # parent genotype 2
-   my @genotypes = ();
-   die "number of snps is different in the 2 parents. bye. \n" if(scalar @$pg1 != scalar @$pg2);
-   # print STDERR "n snps: ", scalar @$pg1, "\n";
-   while (my ($i, $g1) = each @$pg1) {
-      #   print "i: $i \n";
-      my $g2 = $pg2->[$i];
-      my $og = [];              # offspring genotype at this snp
-      push @$og, ( gsl_rng_uniform($the_rng->raw() ) < 0.5)? $g1->[0] : $g1->[1];
-      push @$og, ( gsl_rng_uniform($the_rng->raw() ) < 0.5)? $g2->[0] : $g2->[1];
-      #   print "offspring snp:  $i  ", join(",", @$og), "\n";
-      push @genotypes, $og;
-   }
-   return \@genotypes;
-}
+# sub draw_offspring_genotype{
+#    my $the_rng = shift; 
+#    my $pg1 = shift;             # parent genotype 1
+#    my $pg2 = shift;             # parent genotype 2
+#    my @genotypes = ();
+#    die "number of snps is different in the 2 parents. bye. \n" if(scalar @$pg1 != scalar @$pg2);
+#    # print STDERR "n snps: ", scalar @$pg1, "\n";
+#    while (my ($i, $g1) = each @$pg1) {
+#       #   print "i: $i \n";
+#       my $g2 = $pg2->[$i];
+#       my $og = [];              # offspring genotype at this snp
+#       push @$og, ( gsl_rng_uniform($the_rng->raw() ) < 0.5)? $g1->[0] : $g1->[1];
+#       push @$og, ( gsl_rng_uniform($the_rng->raw() ) < 0.5)? $g2->[0] : $g2->[1];
+#       #   print "offspring snp:  $i  ", join(",", @$og), "\n";
+#       push @genotypes, $og;
+#    }
+#    return \@genotypes;
+# }
 
 
 sub agmr_hgmr{
-   my $g1 = shift;
-   my $g2 = shift;
+   my $gobj1 = shift;
+   my $gobj2 = shift;
+   my $g1 = $gobj1->get_genotypes();
+   my $g2 = $gobj2->get_genotypes();
+   # print ref $gobj1, "]  [", ref $gobj2, "]  [", ref $g1, "]  [", ref $g2, "\n";
    die "number of snps is different in the 2 genotypes. bye. \n" if(scalar @$g1 != scalar @$g2);
    my ($an, $ad, $hn, $hd) = (0, 0, 0, 0);
    # encode genotype: 0: AA, 1: aA, 2: aa  i.e. a count of the number of minor alleles present.
@@ -146,9 +149,9 @@ sub agmr_hgmr{
 
 sub genotype_string{
    my $gt = shift;
-# print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
+   # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
    my $gstring = '';
-   while(my($i, $s) = each @$gt) {
+   while (my($i, $s) = each @$gt) {
       my $snp = join('', @$s);
       $snp = 'aA' if($snp eq 'Aa');
       $gstring .= $snp;
@@ -181,6 +184,7 @@ sub print_genotypes_in_columns{
      #$str .= "]";
      return $str;
   }
+
 
 # end of package
 1;
