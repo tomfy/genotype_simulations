@@ -104,10 +104,12 @@ sub agmr_hgmr{
    # encode genotype: 0: AA, 1: aA, 2: aa  i.e. a count of the number of minor alleles present.
    # encode the pair of genotypes as 00, 01, 10, 02, 20, etc.
    my %paircode_count = ();
+
+ #  print  $gobj1->get_id(), " ", join("", @$g1), "\n";
+ #  print  $gobj2->get_id(), " ", join("", @$g2), "\n";
    while (my($i, $s1) = each @$g1) { # needs to have the '@'; each doesn't work with ref starting with 5.24
       my $s2 = $g2->[$i];       # corresponding snp from sample 2
-    #  my $s1 = join("", @$s1);
-    #  my $ss2 = join("", @$s2);
+   
       if ($s1 eq 'aa') {
          if ($s2 eq 'aa') {
             $ad++; $hd++;
@@ -143,6 +145,8 @@ sub agmr_hgmr{
          }
       }
    }
+#   my $hgmr = ($hd > 0)? $hn/$hd : '---';
+#   print  "hgmr: $hgmr \n";
    return ($an, $ad, $hn, $hd, \%paircode_count); 
 }
 
