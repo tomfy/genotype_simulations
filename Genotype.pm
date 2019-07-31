@@ -11,14 +11,18 @@ sub new_from_population{
    my $n_snps = scalar @$mafs;
    my $generation = shift;
    my $id = shift;
+my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    # print STDERR "$the_rng ; $maf ;  $n_snps \n";
-   
+
    #  print STDERR "ZZZ: ", join(", ", @$mafs), "\n";
    #  $self->set_mafs($mafs);
    $self->set_rng($the_rng);
    $self->set_generation($generation);
    $self->set_id($id);
    $self->set_parents('X', 'X');
+   my $pedigree = '()' . $id;
+   $self->set_pedigree($pedigree);
+   $self->set_max_pedigree_depth($max_pedigree_depth);
 
    my $alleles = $self->draw_alleles($mafs); # an array ref holding 2*$n_snps alleles.
    my @genotypes = ();
@@ -27,7 +31,7 @@ sub new_from_population{
       push @genotypes, $gt;
    }
    #   print "in new_from_pop. [", ref \@genotypes, "] \n";
-   $self->set_genotypes(\@genotypes);
+   $self->set_genotypes(\@genotypes); # e.g. ['AA','Aa','AA', 'aa']
    #   print "in new_from_pop. [", ref $self->get_genotypes(), "] \n";
    return $self;
 }
@@ -40,6 +44,7 @@ sub new_offspring{
    my $pgobj2 = shift;          # parent genotype obj. 2
    my $generation = shift;
    my $id = shift;
+   my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    my @genotypes = ();
    my $pg1 = $pgobj1->get_genotypes();
    my $pg2 = $pgobj2->get_genotypes();
@@ -49,7 +54,11 @@ sub new_offspring{
    $self->set_generation($generation);
    $self->set_id($id);
    $self->set_parents($pgobj1->get_id(), $pgobj2->get_id());
+   $self->set_max_pedigree_depth($max_pedigree_depth);
 
+   my $pedigree = '(' . $pgobj1->get_pedigree() . ',' . $pgobj2->get_pedigree() . ')' . $id;
+   $self->reduce_and_set_pedigree($pedigree);
+ 
    while (my ($i, $g1) = each @$pg1) {
       #   print "i: $i \n";
       my $g2 = $pg2->[$i];
@@ -70,6 +79,43 @@ sub new_offspring{
    return $self;
 }
 
+sub new_from_012string{
+   my $class = shift;
+   my $self = bless {}, $class;
+   my $the_rng = shift;
+   my $string = shift;          # string of 0's, 1's, and 2's
+   my $generation = shift;
+   my $id = shift;
+   my $pedigree = shift // "()$id";
+   my $max_pedigree_depth = shift // 2;
+   $self->set_rng($the_rng);
+   $self->set_generation($generation);
+   $self->set_id($id);
+   $self->set_parents('X', 'X');
+   $self->set_pedigree("()$id");
+   $self->set_max_pedigree_depth($max_pedigree_depth);
+ #  print STDERR "012string: $string \n";
+   $string =~ s/\s+//g;
+   my @zots = split('', $string);
+   my @genotypes = ();
+   for my $azot (@zots) {
+  #    print STDERR "[$azot]\n";
+      if ($azot == 0) {
+         push @genotypes, 'AA';
+      } elsif ($azot == 1) {
+         push @genotypes, (gsl_rng_uniform($the_rng->raw()) < 0.5)? 'Aa' : 'aA';
+      } elsif ($azot == 2) {
+         push @genotypes, 'aa'
+      } else {
+         die "Unexpected char in 012string: $azot \n";
+      }
+   }
+ #  print STDERR '[', join(", ", @genotypes), "]\n";
+   $self->set_genotypes(\@genotypes);
+   return $self;
+}
+
+
 sub draw_alleles{
    my $self = shift;
    my $mafs = shift;            # array ref, $n_SNPa.
@@ -87,17 +133,54 @@ sub draw_alleles{
    return \@alleles;
 }
 
-sub genotype_string{
+sub genotype_aAstring{
    my $self = shift;
+   my $separator = shift // '';
    my $gt = $self->get_genotypes();
    # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
    my $gstring = '';
    while (my($i, $snp) = each @$gt) {
       # my $snp = $s; # join('', @$s);
       $snp = 'aA' if($snp eq 'Aa');
-      $gstring .= $snp;
+      $gstring .= $snp . $separator;
    }
    return $gstring;
+}
+
+sub genotype_012string{         # AA->0, aA, Aa -> 1, aa->2
+   my $self = shift;
+   my $separator = shift // '';
+   my $gt = $self->get_genotypes();
+   # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
+   my $gstring = '';
+   while (my($i, $snp) = each @$gt) {
+      # my $snp = $s; # join('', @$s);
+      if ($snp eq 'AA') {
+         $gstring .= '0' . $separator;
+      } elsif ($snp eq 'aa') {
+         $gstring .= '2' . $separator;
+      } else {                  # aA or Aa
+         $gstring .= '1' . $separator;
+      }
+   }
+   return $gstring;
+}
+
+sub reduce_and_set_pedigree{
+   my $self = shift;
+my $pedigree = shift // $self->get_pedigree();
+my $max_pedigree_depth = $self->get_max_pedigree_depth();
+  $pedigree =~ /^ ( [(]+ )/x; # get initial left parens
+ #  print STDERR "pedigree: $pedigree \n";
+   my $pedigree_depth = (length $1) - 1; # depth == 2 <=> we have info on grandparents, but not great-grandparent.
+ #  print STDERR "  $1   depth $pedigree_depth \n";
+
+   while($pedigree_depth > $max_pedigree_depth) {
+      $pedigree =~ s/\(\)\d+,\(\)\d+//g;
+      $pedigree =~ /^ ( [(]+ )/x; # get initial left parens
+      $pedigree_depth = (length $1) - 1;
+   }
+   $self->set_pedigree($pedigree);
 }
 
 sub set_rng{
@@ -154,6 +237,29 @@ sub get_parents{
    my $self = shift;
    return $self->{parents};
 }
+
+sub set_pedigree{
+   my $self = shift;
+   my $pedigree = shift;
+   $self->{pedigree} = $pedigree;
+}
+
+sub get_pedigree{
+   my $self = shift;
+   return $self->{pedigree};
+}
+
+sub set_max_pedigree_depth{
+   my $self = shift;
+   my $max_pedigree_depth = shift;
+   $self->{max_pedigree_depth} = $max_pedigree_depth;
+}
+
+sub get_max_pedigree_depth{
+   my $self = shift;
+   return $self->{max_pedigree_depth};
+}
+
 
 
 1;
