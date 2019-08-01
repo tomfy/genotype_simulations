@@ -47,7 +47,7 @@ my $sample_size = undef;
    my %id_genotypeobj = ();
    my $id = undef;
    for $id = (1..$pop) {      # generate the initial population of genotypes
-        my $gobj = Genotype->new_from_population($the_rng, $mafs, $_);
+        my $gobj = Genotype->new_from_mafs($the_rng, $mafs, $_);
          push @genotypes, $gobj;
       $id_genotypeobj{$id} = 
    }

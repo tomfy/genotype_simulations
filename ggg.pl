@@ -73,7 +73,7 @@ use Genotype;
 
    my $mafs = GenotypeSim::draw_mafs($the_rng, $mafspec, $n_snps);
 
-   # my $g0 = Genotype->new_from_population($the_rng, $mafs, 0, 666);
+   # my $g0 = Genotype->new_from_mafs($the_rng, $mafs, 0, 666);
    # my $str012 = $g0->genotype_012string();
    # print "$str012 \n", $g0->genotype_string(), "\n";
    # my $g1 = Genotype->new_from_012string($the_rng, $str012, 0, 777);
@@ -89,7 +89,7 @@ use Genotype;
    my %id_genotypeobj = ();
    my ($generation, $id) = (0, 0);
    for (1..$pop) {      # generate the initial population of genotypes
-      my $gobj = Genotype->new_from_population($the_rng, $mafs, $generation, $id);
+      my $gobj = Genotype->new_from_mafs($the_rng, $mafs, $generation, $id);
       #   print "X gen, id:  ", $gobj->get_generation(), "  ", $gobj->get_id(), "\n";
       push @initial_generation, $gobj;
       $id_genotypeobj{$id} = $gobj;
@@ -133,12 +133,12 @@ use Genotype;
       push @dataset_genotype_objects, @$gobjs;
    }
    @dataset_genotype_objects = $the_rng->shuffle(@dataset_genotype_objects);
-   my @sample_genotype_objects;
+  # my @dataset_genotype_objects;
    if (defined $sample_size  and $sample_size < scalar @dataset_genotype_objects) {
       print STDERR "Showing results for ", $sample_size, " samples out of  ", scalar @dataset_genotype_objects, "\n";
-      @sample_genotype_objects = @dataset_genotype_objects[0..$sample_size-1];
+      @dataset_genotype_objects = @dataset_genotype_objects[0..$sample_size-1];
    } else {
-      @sample_genotype_objects = @dataset_genotype_objects;
+      @dataset_genotype_objects = @dataset_genotype_objects;
       print STDERR "Showing results for all  ", scalar @dataset_genotype_objects, " samples. \n";
    }
 
