@@ -10,7 +10,7 @@ sub new_from_mafs{
    my $mafs = shift;            # array ref of maf values
    my $n_snps = scalar @$mafs;
    my $generation = shift;
-   my $id = shift;
+   my $id = shift; # ref to scalar 
 my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    # print STDERR "$the_rng ; $maf ;  $n_snps \n";
 
@@ -18,9 +18,9 @@ my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    #  $self->set_mafs($mafs);
    $self->set_rng($the_rng);
    $self->set_generation($generation);
-   $self->set_id($id);
+   $self->set_id($$id);
    $self->set_parents('X', 'X');
-   my $pedigree = '()' . $id;
+   my $pedigree = '()' . $$id;
    $self->set_pedigree($pedigree);
    $self->set_max_pedigree_depth($max_pedigree_depth);
 
@@ -33,6 +33,7 @@ my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    #   print "in new_from_pop. [", ref \@genotypes, "] \n";
    $self->set_genotypes(\@genotypes); # e.g. ['AA','Aa','AA', 'aa']
    #   print "in new_from_pop. [", ref $self->get_genotypes(), "] \n";
+   $$id++; # increment the id number.
    return $self;
 }
 
@@ -43,7 +44,7 @@ sub new_offspring{
    my $pgobj1 = shift;          # parent genotype obj. 1
    my $pgobj2 = shift;          # parent genotype obj. 2
    my $generation = shift;
-   my $id = shift;
+   my $id = shift; # ref to scalar
    my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
    my @genotypes = ();
    my $pg1 = $pgobj1->get_genotypes();
@@ -52,11 +53,11 @@ sub new_offspring{
    # print STDERR "n snps: ", scalar @$pg1, "\n";
    $self->set_rng($the_rng);
    $self->set_generation($generation);
-   $self->set_id($id);
+   $self->set_id($$id);
    $self->set_parents($pgobj1->get_id(), $pgobj2->get_id());
    $self->set_max_pedigree_depth($max_pedigree_depth);
 
-   my $pedigree = '(' . $pgobj1->get_pedigree() . ',' . $pgobj2->get_pedigree() . ')' . $id;
+   my $pedigree = '(' . $pgobj1->get_pedigree() . ',' . $pgobj2->get_pedigree() . ')' . $$id;
    $self->reduce_and_set_pedigree($pedigree);
  
    while (my ($i, $g1) = each @$pg1) {
@@ -76,6 +77,7 @@ sub new_offspring{
       push @genotypes, $og;
    }
    $self->set_genotypes(\@genotypes);
+$$id++; # increment the id number;
    return $self;
 }
 
@@ -86,13 +88,14 @@ sub new_from_012string{
    my $string = shift;          # string of 0's, 1's, and 2's
    my $generation = shift;
    my $id = shift;
-   my $pedigree = shift // "()$id";
+   my $pedigree = shift // "()$$id";
    my $max_pedigree_depth = shift // 2;
    $self->set_rng($the_rng);
    $self->set_generation($generation);
-   $self->set_id($id);
+   $self->set_id($$id);
    $self->set_parents('X', 'X');
-   $self->set_pedigree("()$id");
+
+   $self->set_pedigree("()" . $$id);
    $self->set_max_pedigree_depth($max_pedigree_depth);
  #  print STDERR "012string: $string \n";
    $string =~ s/\s+//g;
@@ -164,6 +167,22 @@ sub genotype_012string{         # AA->0, aA, Aa -> 1, aa->2
       }
    }
    return $gstring;
+}
+
+sub fasta{ # 
+   my $self = shift;
+   my $character_set = shift // '012';
+   my $separator = shift // '';
+
+      my ($gen, $id, $pedigree) = ($self->get_generation(), 
+                                   $self->get_id(),
+                                   $self->get_pedigree()
+                                  );
+      my $gstring =  ($character_set eq '012')?
+        $self->genotype_012string($separator) :
+          $self->genotype_aAstring($separator);
+
+   return ("$id   $gen   $pedigree", $gstring);
 }
 
 sub reduce_and_set_pedigree{
