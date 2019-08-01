@@ -2,7 +2,7 @@ package Genotype;
 use Math::GSL::RNG  qw( :all );
 
 
-sub new_from_population{
+sub new_from_mafs{
    my $class = shift;
    #   my $args = shift;
    my $self  = bless {}, $class;
