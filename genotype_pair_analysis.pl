@@ -8,11 +8,8 @@ use Math::GSL::RNG  qw( :all );
 use GenotypeSim qw ( :all );
 use Genotype;
 
-# ggg.pl : "generate generations of genotypes"
-
-# the idea here is to start with a set of unrelated genotypes
-# and let them pair up randomly and produce offspring,
-# for some specified number of generations.
+# genotype_pair_analysis.pl : read genotypes in fasta format, 
+# analyze them pairwise (agmr, hgmr, etc.)
 
 {                               # main
 
@@ -44,8 +41,10 @@ use Genotype;
    while (<>) {
       if ( /^> (\S+) \s+ (\S+) \s+ (\S+) /x ) {
          my ($id, $gen, $pedigree) = ($1, $2, $3);
+      #   print STDERR "$id $gen $pedigree \n";
          my $string = <>;
          my $gobj = Genotype->new_from_012string($the_rng, $string, $gen, \$id, $pedigree);
+     #    print STDERR $gobj->get_pedigree(), "\n";
          push @genotype_objects, $gobj;
       }
    }
@@ -69,7 +68,10 @@ use Genotype;
          my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSim::agmr_hgmr($g1, $g2);
          printf  "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", 
            ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
-         printf  "%s \n", GenotypeSim::paircode_count_string($gpc_count);
+ 
+         
+         printf  "%s   ", GenotypeSim::paircode_count_string($gpc_count);
+         printf  "%s  %s \n", $g1->get_pedigree(), $g2->get_pedigree;
       }
    }
 
