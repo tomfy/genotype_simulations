@@ -95,7 +95,7 @@ sub new_from_012string{
    $self->set_id($$id);
    $self->set_parents('X', 'X');
 
-   $self->set_pedigree("()" . $$id);
+   $self->set_pedigree($pedigree);
    $self->set_max_pedigree_depth($max_pedigree_depth);
  #  print STDERR "012string: $string \n";
    $string =~ s/\s+//g;
