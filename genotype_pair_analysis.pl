@@ -16,32 +16,60 @@ use Genotype;
 
 {                               # main
 
-
    # defaults:
    my $sample_size = undef;
+   my $rng_type = $gsl_rng_mt19937;
+   my $rng_seed = undef;
 
- GetOptions(
+   GetOptions(
               'sample_size|size=i' => \$sample_size, # 
+              'rng_type=s' => \$rng_type,
+              'seed=s' => \$rng_seed,
              );
 
-# read in genotypes from fasta file,
+   # ############## set up the random number generator ##########################################
+   if ($rng_type eq 'sys') {
+      $rng_type = $gsl_rng_default;
+   } elsif ($rng_type eq 'mt') {
+      $rng_type = $gsl_rng_mt19937;
+   } elsif ($rng_type eq 'lux') {
+      $rng_type = $gsl_rng_ranlxd2;
+   }
+   print STDERR "RNG type: $rng_type \n";
+   my $the_rng = (defined $rng_seed)? Math::GSL::RNG->new($rng_type, $rng_seed) : Math::GSL::RNG->new($rng_type) ; # RNG
+   # ############################################################################################
 
-
-# choose a sample of sample_size u.a.r. if sample_size defined.
-
-# compare pairs
-
-my $output_filename;
-   open my $fhout, ">", $output_filename;
-   while (my ($i, $g1) = each @sample_genotype_objects) {
-      print STDERR "$i out of ", scalar @sample_genotype_objects, "\n";
-      for (my $j = $i; $j < scalar @sample_genotype_objects; $j++) {
-         #   print STDERR "$i $j \n";
-         my $g2 = $sample_genotype_objects[$j];
-         #    GenotypeSim::print_genotypes_in_columns($g1, $g2);
-         my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSim::agmr_hgmr($g1, $g2);
-         printf $fhout "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
-         printf $fhout "%s \n", GenotypeSim::paircode_count_string($gpc_count);
+   # read in genotypes from fasta file,
+   my @genotype_objects = ();
+   while (<>) {
+      if ( /^> (\S+) \s+ (\S+) \s+ (\S+) /x ) {
+         my ($id, $gen, $pedigree) = ($1, $2, $3);
+         my $string = <>;
+         my $gobj = Genotype->new_from_012string($the_rng, $string, $gen, $id, $pedigree);
+         push @genotype_objects, $gobj;
       }
    }
-}
+
+   # ###########   get subset of size $sample_size   ################################
+   if (defined $sample_size  and  ($sample_size < scalar @genotype_objects)) {
+      @genotype_objects = $the_rng->shuffle(@genotype_objects);
+      @genotype_objects = @genotype_objects[0..$sample_size-1];
+   }
+
+   # ########################    compare pairs   ####################################
+
+#   my $output_filename;
+#   open my $fhout, ">", $output_filename;
+   while (my ($i, $g1) = each @genotype_objects) {
+      print STDERR "$i out of ", scalar @genotype_objects, "\n";
+      for (my $j = $i; $j < scalar @genotype_objects; $j++) {
+         #   print STDERR "$i $j \n";
+         my $g2 = $genotype_objects[$j];
+         #    GenotypeSim::print_genotypes_in_columns($g1, $g2);
+         my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSim::agmr_hgmr($g1, $g2);
+         printf  "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
+         printf  "%s \n", GenotypeSim::paircode_count_string($gpc_count);
+      }
+   }
+
+} ############################     end of main   ####################################
