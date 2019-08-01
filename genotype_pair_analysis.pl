@@ -45,7 +45,7 @@ use Genotype;
       if ( /^> (\S+) \s+ (\S+) \s+ (\S+) /x ) {
          my ($id, $gen, $pedigree) = ($1, $2, $3);
          my $string = <>;
-         my $gobj = Genotype->new_from_012string($the_rng, $string, $gen, $id, $pedigree);
+         my $gobj = Genotype->new_from_012string($the_rng, $string, $gen, \$id, $pedigree);
          push @genotype_objects, $gobj;
       }
    }
@@ -67,7 +67,8 @@ use Genotype;
          my $g2 = $genotype_objects[$j];
          #    GenotypeSim::print_genotypes_in_columns($g1, $g2);
          my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSim::agmr_hgmr($g1, $g2);
-         printf  "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
+         printf  "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", 
+           ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
          printf  "%s \n", GenotypeSim::paircode_count_string($gpc_count);
       }
    }
