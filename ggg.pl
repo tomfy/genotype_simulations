@@ -89,7 +89,7 @@ use Genotype;
    my %id_genotypeobj = ();
    my ($generation, $id) = (0, 0);
    for (1..$pop) {      # generate the initial population of genotypes
-      my $gobj = Genotype->new_from_mafs($the_rng, $mafs, $generation, $id);
+      my $gobj = Genotype->new_from_mafs($the_rng, $mafs, $generation, \$id);
       #   print "X gen, id:  ", $gobj->get_generation(), "  ", $gobj->get_id(), "\n";
       push @initial_generation, $gobj;
       $id_genotypeobj{$id} = $gobj;
@@ -115,7 +115,7 @@ use Genotype;
                          gsl_rng_uniform_int($the_rng->raw(), scalar @this_generation)
                        );
 
-         my $gobj = Genotype->new_offspring($the_rng, $this_generation[$i], $this_generation[$j], $i_gen, $id ); # 1st offspring
+         my $gobj = Genotype->new_offspring($the_rng, $this_generation[$i], $this_generation[$j], $i_gen, \$id ); # 1st offspring
          $id_genotypeobj{$id} = $gobj;
          push @next_generation, $gobj;
          $id++;
@@ -135,11 +135,11 @@ use Genotype;
    @dataset_genotype_objects = $the_rng->shuffle(@dataset_genotype_objects);
   # my @dataset_genotype_objects;
    if (defined $sample_size  and $sample_size < scalar @dataset_genotype_objects) {
-      print STDERR "Showing results for ", $sample_size, " samples out of  ", scalar @dataset_genotype_objects, "\n";
+      print STDERR "Outputting  ", $sample_size, " samples out of  ", scalar @dataset_genotype_objects, "\n";
       @dataset_genotype_objects = @dataset_genotype_objects[0..$sample_size-1];
    } else {
       @dataset_genotype_objects = @dataset_genotype_objects;
-      print STDERR "Showing results for all  ", scalar @dataset_genotype_objects, " samples. \n";
+      print STDERR "Outputting  ", scalar @dataset_genotype_objects, " samples. \n";
    }
 
    @dataset_genotype_objects = sort { $a->get_id() <=> $b->get_id() } @dataset_genotype_objects;
