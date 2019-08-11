@@ -14,7 +14,7 @@ use GenotypeSim qw ( :all );
    # defaults:
    my $n_snps = 10;             # number of snps in each sample.
    #  my $relationship = 'PO'; # PO: parent-offspring. Or FS (full sib), HS (half sib), etc. ...
-   my $n_reps = 100; # number of simulated sample pairs or each relationship specified by $rel_string;
+   my $n_pairs = 100; # number of simulated sample pairs or each relationship specified by $rel_string;
    my $mafspec = 'delta,0.25';  # minor allele frequency
    my $rel_string = 'PO,FS,HS,FC'; # 
    my $fasta_character_set = '012';
@@ -22,7 +22,7 @@ use GenotypeSim qw ( :all );
    GetOptions(
               'nsnps=i' => \$n_snps, # 
               #  'relationship=s' => \$relationship,
-              'nreps=i' => \$n_reps,
+              'npairs|nreps=i' => \$n_pairs,
               'maf|minor_allele_frequence=s' => \$mafspec, # 0 < $maf <= 0.5
               'rels|relationships=s' => \$rel_string, 
              );
@@ -34,7 +34,7 @@ use GenotypeSim qw ( :all );
 my ($gen, $id) = (0, 0);
    for my $relationship (@rels) {
 
-      for (1..$n_reps) { # simulate $n_reps genotype pairs with $relationship
+      for (1..$n_pairs) { # simulate $n_pairs genotype pairs with $relationship
 
          if ($relationship eq 'DPO') { # both parents are same individual
             my $p1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
@@ -140,7 +140,7 @@ my ($gen, $id) = (0, 0);
             push @genotype_objects, ($genotype1, $genotype2);
             #      my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSim::agmr_hgmr($genotype1, $genotype2);
             #      print "UN   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSim::paircode_count_string($gpc_count), "\n";
-         } elsif ($relationship eq 'GP4ID') { # all 4 grandparents are the same individual
+         } elsif ($relationship eq 'GP4ID') { # all 4 grandparents are the same individual, parents distinct.
              my $gp_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
              my $p1_genotype = Genotype->new_offspring($the_rng, $gp_genotype, $gp_genotype, $gen, \$id);
              my $p2_genotype = Genotype->new_offspring($the_rng, $gp_genotype, $gp_genotype, $gen, \$id);
@@ -172,18 +172,84 @@ my ($gen, $id) = (0, 0);
              my $p_genotype = Genotype->new_offspring($the_rng, $gp_genotype, $gp_genotype, $gen, \$id);
              my $o_genotype = Genotype->new_offspring($the_rng, $p_genotype, $p_genotype, $gen, \$id);
              push @genotype_objects, ($gp_genotype, $o_genotype);
-          }
-      } # end loop over simulated pairs of one type (relationship).
-   } # end loop over relationships
+          }elsif ($relationship eq 'X00') { # rel. between two distinct indivs whose 4 parents are all distinct
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
 
- #  print "n gobjs: ", scalar @genotype_objects, "\n";
-   for my $gobj (@genotype_objects){
-  #    print STDERR "ref gobj: ", ref $gobj, "\n";
-      my ($idline, $seqline) = $gobj->fasta($fasta_character_set);
-      print ">$idline\n", "$seqline\n";
-   }
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }elsif ($relationship eq 'X01') { # rel. between two distinct indivs. 3 distinct parents, a1=b1 half-sibling
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }elsif ($relationship eq 'X02') { # rel. between two distinct indivs. 2 distinct parents, a1=b1, a2=b2 full sibling
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = $pa2_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype)
+          }elsif ($relationship eq 'X10') { # rel. between two distinct indivs. 3 distinct parents. a1, a2 are identical
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }elsif ($relationship eq 'X20') { # rel. between two distinct indivs. 2 distinct parent, a1=a2, b1=b2
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = $pb1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }elsif ($relationship eq 'X12') { # rel. between two distinct indivs. 3 identical parents, a1=a2=b1
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb2_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }elsif ($relationship eq 'X24') { # rel. between two distinct indivs. 2 distinct parent, a1=a2, b1=b2
+             my $pa1_genotype = Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pa2_genotype = $pa1_genotype; # Genotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
+             my $pb1_genotype = $pa1_genotype;
+             my $pb2_genotype = $pa1_genotype;
+
+             my $a_genotype = Genotype->new_offspring($the_rng, $pa1_genotype, $pa2_genotype, $gen, \$id);
+             my $b_genotype = Genotype->new_offspring($the_rng, $pb1_genotype, $pb2_genotype, $gen, \$id);
+             push @genotype_objects, ($a_genotype, $b_genotype);
+          }
+      }    # end loop over simulated pairs of one type (relationship).
+      #  print "n gobjs: ", scalar @genotype_objects, "\n";
+      # ############## output fasta ##########################
+      print "# relationship: $relationship   mafspec $mafspec   nsnps: $n_snps   npairs: $n_pairs \n";
+      for my $gobj (@genotype_objects) {
+         #    print STDERR "ref gobj: ", ref $gobj, "\n";
+         my ($idline, $seqline) = $gobj->fasta($fasta_character_set);
+         print ">$idline\n", "$seqline\n";
+      }
+
+   }                            # end loop over relationships
 
 } # ############################# end of main #########################################
+
 
  #   while (my ($i, $g1) = each @genotypes) {
 #       for (my $j = $i+1; $j < scalar @genotypes; $j++) {
