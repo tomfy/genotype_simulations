@@ -5,8 +5,8 @@ use List::Util qw(min max sum);
 # use Graphics::GnuplotIF qw(GnuplotIF);
 use Getopt::Long;
 use Math::GSL::RNG  qw( :all );
-use GenotypeSim qw ( :all );
-use Genotype;
+use GenotypeSimulation qw ( :all );
+use SimulatedGenotype;
 
 # ggg.pl : "generate generations of genotypes"
 
@@ -69,14 +69,14 @@ use Genotype;
 
 
    # ##################################################################################################
-   # ########### get the initial generation of Genotype objects with the given set of mafs ############
+   # ########### get the initial generation of SimulatedGenotype objects with the given set of mafs ############
 
-   my $mafs = GenotypeSim::draw_mafs($the_rng, $mafspec, $n_snps);
+   my $mafs = GenotypeSimulation::draw_mafs($the_rng, $mafspec, $n_snps);
 
-   # my $g0 = Genotype->new_from_mafs($the_rng, $mafs, 0, 666);
+   # my $g0 = SimulatedGenotype->new_from_mafs($the_rng, $mafs, 0, 666);
    # my $str012 = $g0->genotype_012string();
    # print "$str012 \n", $g0->genotype_string(), "\n";
-   # my $g1 = Genotype->new_from_012string($the_rng, $str012, 0, 777);
+   # my $g1 = SimulatedGenotype->new_from_012string($the_rng, $str012, 0, 777);
    # my $str012_1 = $g1->genotype_012string();
    # print "$str012_1 \n", $g1->genotype_string(), "\n";
    # exit;
@@ -84,12 +84,12 @@ use Genotype;
 
    # generate a data set of genotypes, by choosing an initial population,
    # and generation several generations ... 
-   my @initial_generation = (); # a set of Genotype objects from 1 generation.
+   my @initial_generation = (); # a set of SimulatedGenotype objects from 1 generation.
    my @stored_generations = ();
    my %id_genotypeobj = ();
    my ($generation, $id) = (0, 0);
    for (1..$pop) {      # generate the initial population of genotypes
-      my $gobj = Genotype->new_from_mafs($the_rng, $mafs, $generation, \$id);
+      my $gobj = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $generation, \$id);
       #   print "X gen, id:  ", $gobj->get_generation(), "  ", $gobj->get_id(), "\n";
       push @initial_generation, $gobj;
       $id_genotypeobj{$id} = $gobj;
@@ -115,7 +115,7 @@ use Genotype;
                          gsl_rng_uniform_int($the_rng->raw(), scalar @this_generation)
                        );
 
-         my $gobj = Genotype->new_offspring($the_rng, $this_generation[$i], $this_generation[$j], $i_gen, \$id ); # 1st offspring
+         my $gobj = SimulatedGenotype->new_offspring($the_rng, $this_generation[$i], $this_generation[$j], $i_gen, \$id ); # 1st offspring
          $id_genotypeobj{$id} = $gobj;
          push @next_generation, $gobj;
          $id++;

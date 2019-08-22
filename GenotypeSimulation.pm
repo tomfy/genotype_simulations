@@ -1,4 +1,4 @@
-package GenotypeSim;
+package GenotypeSimulation;
 use strict;
 use 5.012;
 use List::Util qw (min max sum);

@@ -6,11 +6,11 @@ use List::Util qw(min max sum);
 use Getopt::Long;
 use Math::GSL::RNG  qw( :all );
 use Math::GSL::Randist  qw( :all );
-# use GenotypeSim qw ( :all );
-use Genotype;
+# use GenotypeSimulation qw ( :all );
+use SimulatedGenotype;
 
 # fasta2paupnexus.pl : read in fasta format genotypes
-# construct Genotype objects and output nexus
+# construct SimulatedGenotype objects and output nexus
 # files for use as paup input.
 
 {                               # main
@@ -49,7 +49,7 @@ use Genotype;
       if (/^>(\S+)\s+(\S+)\s+(\S+)/) {
          my ($id, $gen, $pedigree) = ($1, $2, $3);
          my $gstring = <>;
-         my $gobj = Genotype->new_from_012string($the_rng, $gstring, $gen, $id, $pedigree);
+         my $gobj = SimulatedGenotype->new_from_012string($the_rng, $gstring, $gen, $id, $pedigree);
          push @genotype_objects, $gobj;
       }
    }
@@ -66,7 +66,7 @@ use Genotype;
 ################################################################
 
 sub genotypes_as_nexus{
-   my $genotype_objects = shift; # array ref of Genotype objects.
+   my $genotype_objects = shift; # array ref of SimulatedGenotype objects.
 
    my $ntaxa = scalar @$genotype_objects;
    my $taxa_block = "begin taxa; \n";;

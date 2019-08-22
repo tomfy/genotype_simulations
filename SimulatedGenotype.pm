@@ -1,4 +1,4 @@
-package Genotype;
+package SimulatedGenotype;
 use Math::GSL::RNG  qw( :all );
 
 
@@ -185,8 +185,9 @@ sub fasta{ #
    return ("$id   $gen   $pedigree", $gstring);
 }
 
-sub reduce_and_set_pedigree{
-   my $self = shift;
+sub reduce_and_set_pedigree{ # if depth of pedigree is greater than specified max, reduce it
+   # and set the pedigree of the SimulatedGenotype object to this new, reduced value.
+  my $self = shift;
 my $pedigree = shift // $self->get_pedigree();
 my $max_pedigree_depth = $self->get_max_pedigree_depth();
   $pedigree =~ /^ ( [(]+ )/x; # get initial left parens
@@ -278,7 +279,6 @@ sub get_max_pedigree_depth{
    my $self = shift;
    return $self->{max_pedigree_depth};
 }
-
 
 
 1;
