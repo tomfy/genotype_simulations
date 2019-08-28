@@ -4,6 +4,20 @@ use warnings;
 use List::Util qw(min max sum);
 # use Graphics::GnuplotIF qw(GnuplotIF);
 use Getopt::Long;
+
+
+use File::Basename 'dirname';
+use Cwd 'abs_path';
+my ( $bindir, $libdir );
+BEGIN {     # this has to go in Begin block so happens at compile time
+   $bindir =
+     dirname( abs_path(__FILE__) ) ; # the directory containing this script
+   $libdir = $bindir . '/../lib';
+   $libdir = abs_path($libdir); # collapses the bin/../lib to just lib
+}
+use lib $libdir;
+
+
 use Math::GSL::RNG  qw( :all );
 use GenotypeSimulation qw ( :all );
 use SimulatedGenotype;
