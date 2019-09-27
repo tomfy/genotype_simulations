@@ -79,7 +79,10 @@ sub new_offspring{
    $self->set_genotypes(\@genotypes);
 $$id++; # increment the id number;
    return $self;
-}
+ }
+
+
+  
 
 sub new_from_012string{
    my $class = shift;
@@ -118,6 +121,26 @@ sub new_from_012string{
    return $self;
 }
 
+sub chunkwise_matching{
+  my $self = shift;
+  my $other_genotype = shift;
+  my $chunk_size = shift;
+
+  my $s1 = $self->genotype_012string();
+  my $s2 = $other_genotype->genotype_012string();
+ # print STDERR "[$chunk_size] \n [$s1] \n [$s2] \n";
+  my ($eq_count, $ne_count) = (0, 0);
+  while (length $s1 >= $chunk_size) {
+    my $ch1 = substr($s1, 0, $chunk_size, '');
+    my $ch2 = substr($s2, 0, $chunk_size, '');
+    if ($ch1 eq $ch2) {
+      $eq_count++;
+    } else {
+      $ne_count++;
+    }
+  }
+  return ($eq_count, $ne_count);
+}
 
 sub draw_alleles{
    my $self = shift;
