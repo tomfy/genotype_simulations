@@ -29,13 +29,14 @@ use GenotypeSimulation qw ( :all );
    my $mafspec = 'delta,0.25';  # minor allele frequency
    my $rel_string = 'PO,FS,HS,FC'; # 
    my $fasta_character_set = '012';
- 
+   my $chunk_size = 5;
    GetOptions(
               'nsnps=i' => \$n_snps, # 
               #  'relationship=s' => \$relationship,
               'npairs|nreps=i' => \$n_pairs,
               'maf|minor_allele_frequence=s' => \$mafspec, # 0 < $maf <= 0.5
               'rels|relationships=s' => \$rel_string, 
+              'chunk_size=i' => \$chunk_size,
              );
 
    my $mafs = GenotypeSimulation::draw_mafs($the_rng, $mafspec, $n_snps);
@@ -61,7 +62,7 @@ my ($gen, $id) = (0, 0);
             my $o_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p2_genotype, $gen, \$id);
          #   print STDERR "refs of gobjs: ", ref $p1_genotype, "  ", ref $o_genotype, "\n";
             push @genotype_objects, ($p1_genotype, $o_genotype);
-	    print STDERR "eq, ne counts: ", join('  ', $p1_genotype->chunkwise_matching($o_genotype, 4)), "\n";
+	    print STDERR "eq, ne counts: ", join('  ', $p1_genotype->chunkwise_matching($o_genotype, $chunk_size)), "\n";
             #   print GenotypeSimulation::genotype_string($p1_genotype), "\n";
             #    GenotypeSimulation::print_genotypes_in_columns($p1_genotype, $p2_genotype, $o_genotype, $gen, \$id);
             #       my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($p1_genotype, $o_genotype, $gen, \$id);
@@ -72,7 +73,7 @@ my ($gen, $id) = (0, 0);
             my $o1_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p2_genotype, $gen, \$id);
             my $o2_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p2_genotype, $gen, \$id);
             push @genotype_objects, ($o1_genotype, $o2_genotype);
-	    print STDERR "eq, ne counts: ", join('  ', $o1_genotype->chunkwise_matching($o2_genotype, 4)), "\n";
+	    print STDERR "eq, ne counts: ", join('  ', $o1_genotype->chunkwise_matching($o2_genotype, $chunk_size)), "\n";
             #        my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($o1_genotype, $o2_genotype, $gen, \$id);
             #        print "FS   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'DFS') { # 'double full siblings ' i.e. 
@@ -80,7 +81,7 @@ my ($gen, $id) = (0, 0);
             my $o1_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p1_genotype, $gen, \$id);
             my $o2_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p1_genotype, $gen, \$id);
             push @genotype_objects, ($o1_genotype, $o2_genotype);
-	     print STDERR "eq, ne counts: ", join('  ', $o1_genotype->chunkwise_matching($o2_genotype, 4)), "\n";
+	     print STDERR "eq, ne counts: ", join('  ', $o1_genotype->chunkwise_matching($o2_genotype, $chunk_size)), "\n";
             #       my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($o1_genotype, $o2_genotype, $gen, \$id);
             #       print "DFS   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'FC') { # first cousins
@@ -96,7 +97,7 @@ my ($gen, $id) = (0, 0);
             my $c1_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p3_genotype, $gen, \$id);
             my $c2_genotype = SimulatedGenotype->new_offspring($the_rng, $p2_genotype, $p4_genotype, $gen, \$id);
             push @genotype_objects, ($c1_genotype, $c2_genotype);
-	     print STDERR "eq, ne counts: ", join('  ', $c1_genotype->chunkwise_matching($c2_genotype, 4)), "\n";
+	     print STDERR "eq, ne counts: ", join('  ', $c1_genotype->chunkwise_matching($c2_genotype, $chunk_size)), "\n";
             #     my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($c1_genotype, $c2_genotype, $gen, \$id);
             #      print "FC   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'AUNN') { # aunt/uncle - niece/nephew
@@ -124,7 +125,7 @@ my ($gen, $id) = (0, 0);
 
             my $gc_genotype = SimulatedGenotype->new_offspring($the_rng, $p1_genotype, $p3_genotype, $gen, \$id); # offspring of p1 and p3, gc of gp1 & gp2
             push @genotype_objects, ($gp2_genotype, $gc_genotype);
-	     print STDERR "eq, ne counts: ", join('  ', $gp2_genotype->chunkwise_matching($gc_genotype, 4)), "\n";
+	     print STDERR "eq, ne counts: ", join('  ', $gp2_genotype->chunkwise_matching($gc_genotype, $chunk_size)), "\n";
             #    my $c2_genotype = SimulatedGenotype->new_offspring($the_rng, $p2_genotype, $p4_genotype, $gen, \$id);
             #     my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($gp2_genotype, $gc_genotype, $gen, \$id);
             #     print "GPGC   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
@@ -136,7 +137,7 @@ my ($gen, $id) = (0, 0);
             my $o23_genotype = SimulatedGenotype->new_offspring($the_rng, $p2_genotype, $p3_genotype, $gen, \$id);
         #    my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($o12_genotype, $o23_genotype, $gen, \$id);
 	    push @genotype_objects, ($o12_genotype, $o23_genotype);
-	     print STDERR "eq, ne counts: ", join('  ', $o12_genotype->chunkwise_matching($o23_genotype, 4)), "\n";
+	     print STDERR "eq, ne counts: ", join('  ', $o12_genotype->chunkwise_matching($o23_genotype, $chunk_size)), "\n";
             #      print "HS   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'HAUNN') { # half-aunt/uncle - half-niece/nephew
             my $p1_genotype = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
@@ -149,12 +150,14 @@ my ($gen, $id) = (0, 0);
             my $p4_genotype = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
             my $hnn_genotype = SimulatedGenotype->new_offspring($the_rng, $o12_genotype, $p4_genotype, $gen, \$id);
             push @genotype_objects, ($hnn_genotype, $o23_genotype);
+ print STDERR "eq, ne counts: ", join('  ', $hnn_genotype->chunkwise_matching($o23_genotype, $chunk_size)), "\n";
             #      my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($hnn_genotype, $o23_genotype, $gen, \$id);
             #      print "HAUNN   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'UN') { # unrelated
             my $genotype1 = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
             my $genotype2 = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $gen, \$id);
             push @genotype_objects, ($genotype1, $genotype2);
+            print STDERR "eq, ne counts: ", join('  ', $genotype1->chunkwise_matching($genotype2, $chunk_size)), "\n";
             #      my ($an, $ad, $hn, $hd, $gpc_count) = GenotypeSimulation::agmr_hgmr($genotype1, $genotype2);
             #      print "UN   $an  $ad   $hn  $hd  ", $an/$ad, "  ", ($hd > 0)? $hn/$hd : '---',  "  ", GenotypeSimulation::paircode_count_string($gpc_count), "\n";
          } elsif ($relationship eq 'GP4ID') { # all 4 grandparents are the same individual, parents distinct.

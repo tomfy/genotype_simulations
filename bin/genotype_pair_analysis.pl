@@ -5,11 +5,23 @@ use List::Util qw(min max sum);
 # use Graphics::GnuplotIF qw(GnuplotIF);
 use Getopt::Long;
 use Math::GSL::RNG  qw( :all );
-use GenotypeSimulation qw ( :all );
-use SimulatedGenotype;
 
 # genotype_pair_analysis.pl : read genotypes in fasta format, 
 # analyze them pairwise (agmr, hgmr, etc.)
+
+use File::Basename 'dirname';
+use Cwd 'abs_path';
+my ( $bindir, $libdir );
+BEGIN {     # this has to go in Begin block so happens at compile time
+  $bindir =
+    dirname( abs_path(__FILE__) ) ; # the directory containing this script
+  $libdir = $bindir . '/../lib';
+  $libdir = abs_path($libdir);	# collapses the bin/../lib to just lib
+}
+use lib $libdir;
+
+use GenotypeSimulation qw ( :all );
+use SimulatedGenotype;
 
 {                               # main
 
@@ -77,7 +89,6 @@ use SimulatedGenotype;
    } else {                     # all vs all
       while (my ($i, $g1) = each @genotype_objects) {
          print STDERR "$i out of ", scalar @genotype_objects, "\n";
-     
          for (my $j = $i; $j < scalar @genotype_objects; $j++) {
             #   print STDERR "$i $j \n";
             my $g2 = $genotype_objects[$j];
@@ -86,8 +97,10 @@ use SimulatedGenotype;
             printf  "%3i %3i %4i %4i %4i %4i  %5.4f %5.4f   ", 
               ($g1->get_id(), $g2->get_id(), $an, $ad, $hn, $hd, $an/$ad, ($hd > 0)? $hn/$hd : -100);
  
-         
-            printf  "%s   ", GenotypeSimulation::paircode_count_string($gpc_count);
+         my $ogmr_n = ($gpc_count->{'01'} // 0) + ($gpc_count->{'10'} // 0) + ($gpc_count->{'12'} // 0) + ($gpc_count->{'21'} // 0);
+           my $ogmr_d = $ogmr_n + ($gpc_count->{'11'} // 0);
+printf("  %5.4f  ", ($ogmr_d > 0)? $ogmr_n/$ogmr_d : -1 );
+printf  "%s   ", GenotypeSimulation::paircode_count_string($gpc_count);
             printf  "%s  %s \n", $g1->get_pedigree(), $g2->get_pedigree;
          }
       }
