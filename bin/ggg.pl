@@ -38,7 +38,7 @@ use SimulatedGenotype;
    my $mafspec = 'delta,0.25';  # minor allele frequency 
    my $max_pedigree_depth = 2;
    my $rng_type = $gsl_rng_mt19937;
-   my $rng_seed = undef;
+   my $rng_seed = 135791;
    my $n_gens_out = $n_generations;
    my $sample_size = undef;
    my $fasta_character_set = '012'; # anything else gives aA, aa, AA.
@@ -207,8 +207,9 @@ sub genotypes_as_fasta{
                                    $gobj->get_pedigree()
                                   );
       my $gstring =  ($character_set eq '012')?
-        $gobj->genotype_012string($separator) :
-          $gobj->genotype_aAstring($separator);
+#	$gobj->genotype_012string($separator) . "\n" .
+	$gobj->get_gtstring() :
+          $gobj->genotype_Aa_string($separator);
       $fasta_string .= ">$id   $gen   $pedigree \n";
       $fasta_string .= "$gstring \n";
    }
