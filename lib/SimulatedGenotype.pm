@@ -9,15 +9,15 @@ sub new_from_mafs{
   my $mafs = shift;		# array ref of maf values
   my $n_snps = scalar @$mafs;
   my $generation = shift;
-  my $id = shift;		     # ref to scalar 
+  my $id = shift;		     #  scalar 
   my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
   # print STDERR "$the_rng ; $maf ;  $n_snps \n";
 
   $self->set_rng($the_rng);
   $self->set_generation($generation);
-  $self->set_id($$id);
+  $self->set_id($id);
   $self->set_parents('X', 'X');
-  my $pedigree = '()' . $$id;
+  my $pedigree = '()' . $id;
   $self->set_pedigree($pedigree);
   $self->set_max_pedigree_depth($max_pedigree_depth);
 
@@ -43,7 +43,7 @@ sub new_from_mafs{
   $self->set_gtstring($gtstring); # e.g. "0112"
 #  print "new from maf: gtstring: $gtstring\n";
   #   print "in new_from_pop. [", ref $self->get_genotypes(), "] \n";
-  $$id++;			# increment the id number.
+  # $$id++;			# increment the id number.
 #  die "$id is $$id \n" if($$id > 8);
   return $self;
 }
@@ -67,11 +67,11 @@ sub new_offspring{
   # print STDERR "n snps: ", scalar @$pg1, "\n";
   $self->set_rng($the_rng);
   $self->set_generation($generation);
-  $self->set_id($$id);
+  $self->set_id($id);
   $self->set_parents($pgobj1->get_id(), $pgobj2->get_id());
   $self->set_max_pedigree_depth($max_pedigree_depth);
 
-  my $pedigree = '(' . $pgobj1->get_pedigree() . ',' . $pgobj2->get_pedigree() . ')' . $$id;
+  my $pedigree = '(' . $pgobj1->get_pedigree() . ',' . $pgobj2->get_pedigree() . ')' . $id;
   $self->reduce_and_set_pedigree($pedigree);
 
  
@@ -103,7 +103,7 @@ sub new_offspring{
      
   # $self->set_genotypes(\@genotypes);
   $self->set_gtstring($gtstring);
-  $$id++;			# increment the id number;
+ # $$id++;			# increment the id number;
   return $self;
 }
   
@@ -115,11 +115,11 @@ sub new_from_012string{
   my $string = shift;		# string of 0's, 1's, and 2's
   my $generation = shift;
   my $id = shift;
-  my $pedigree = shift // "()$$id";
+  my $pedigree = shift // "()$id";
   my $max_pedigree_depth = shift // 2;
   $self->set_rng($the_rng);
   $self->set_generation($generation);
-  $self->set_id($$id);
+  $self->set_id($id);
   $self->set_parents('X', 'X');
 
   $self->set_pedigree($pedigree);

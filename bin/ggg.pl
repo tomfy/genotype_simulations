@@ -39,7 +39,7 @@ use SimulatedGenotype;
    my $max_pedigree_depth = 2;
    my $rng_type = $gsl_rng_mt19937;
    my $rng_seed = 135791;
-   my $n_gens_out = $n_generations;
+   my $n_gens_out = undef;
    my $sample_size = undef;
    my $fasta_character_set = '012'; # anything else gives aA, aa, AA.
    my $fasta_filename = undef;
@@ -59,13 +59,16 @@ use SimulatedGenotype;
               'output_fasta_filename=s' => \$fasta_filename,
               'keep_prob=f' => \$keep_prob,
              );
-
+ if(!defined $n_gens_out){
+     $n_gens_out = $n_generations;
+   }
    if (!defined $sample_size) {
       $sample_size = $n_gens_out * $pop;
    }
    if (!defined $keep_prob) {
       $keep_prob = $sample_size / ($n_gens_out * $pop);
-   }
+    }
+  
    print STDERR "sample size: $sample_size  keep prob: $keep_prob \n";
 
 
@@ -105,7 +108,7 @@ use SimulatedGenotype;
    my ($generation, $id) = (0, 0);
    open my $fh_out, ">", $fasta_filename . '.fasta';
    for my $k (1..$pop) {      # generate the initial population of genotypes
-      my $gobj = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $generation, \$id);
+      my $gobj = SimulatedGenotype->new_from_mafs($the_rng, $mafs, $generation, 'A' . $id);
       print STDERR "gen 0.  i: $k \n" if($k % 100 == 0);
       #   print STDERR "$keep_prob  $n_gens_out  $n_generations ", gsl_rng_uniform($the_rng->raw() ), "\n";
       if ($n_gens_out == $n_generations) { # if should output the initial generation
@@ -142,7 +145,7 @@ use SimulatedGenotype;
                          gsl_rng_uniform_int($the_rng->raw(), scalar @$this_generation)
                        );
 
-         my $gobj = SimulatedGenotype->new_offspring($the_rng, $this_generation->[$i], $this_generation->[$j], $i_gen, \$id ); # 1st offspring
+         my $gobj = SimulatedGenotype->new_offspring($the_rng, $this_generation->[$i], $this_generation->[$j], $i_gen, 'A' . $id ); # 1st offspring
          print STDERR "gen $i_gen.  k: $k \n" if($k % 100 == 0);
          if ($i_gen >= $n_generations - $n_gens_out) { # if this is one of the generations we want to keep.
             if (
