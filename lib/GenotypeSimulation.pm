@@ -148,6 +148,66 @@ sub agmr_hgmr{
 #   my $hgmr = ($hd > 0)? $hn/$hd : '---';
 #   print  "hgmr: $hgmr \n";
    return ($an, $ad, $hn, $hd, \%paircode_count); 
+ }
+
+sub agmr_hgmr_012{
+   my $gobj1 = shift;
+   my $gobj2 = shift;
+ #  my $g1 = $gobj1->get_genotypes();
+ #  my $g2 = $gobj2->get_genotypes();
+   # print ref $gobj1, "]  [", ref $gobj2, "]  [", ref $g1, "]  [", ref $g2, "\n";
+ #  die "number of snps is different in the 2 genotypes. bye. \n" if(scalar @$g1 != scalar @$g2);
+   my ($an, $ad, $hn, $hd) = (0, 0, 0, 0);
+   # encode genotype: 0: AA, 1: aA, 2: aa  i.e. a count of the number of minor alleles present.
+   # encode the pair of genotypes as 00, 01, 10, 02, 20, etc.
+   my %paircode_count = ();
+
+ #  print  $gobj1->get_id(), " ", join("", @$g1), "\n";
+   #  print  $gobj2->get_id(), " ", join("", @$g2), "\n";
+   my @g1s = split('', $gobj1->get_gtstring());
+   my @g2s = split('', $gobj2->get_gtstring());
+   
+   while (my($i, $s1) = each @g1s) { # needs to have the '@'; each doesn't work with ref starting with 5.24
+      my $s2 = $g2s[$i];       # corresponding snp from sample 2
+   
+      if ($s1 eq 2) {
+         if ($s2 eq 2) {
+            $ad++; $hd++;
+            $paircode_count{'22'}++; # aa-aa -> 22
+         } elsif ($s2 eq 0) {
+            $ad++; $an++; $hd++; $hn++;
+            $paircode_count{'20'}++; # aa-AA -> 20
+         } else {                    # s2 is heterozygous
+            $ad++; $an++;
+            $paircode_count{'21'}++; # aa-Aa -> 21
+         }
+      } elsif ($s1 eq 0) {
+         if ($s2 eq 2) {
+            $ad++; $an++; $hd++; $hn++;
+            $paircode_count{'02'}++;
+         } elsif ($s2 eq 0) {
+            $ad++; $hd++;
+            $paircode_count{'00'}++;
+         } else {               # s2 is heterozygous
+            $ad++; $an++;
+            $paircode_count{'01'}++;
+         }
+      } else {                  # s1 is heterozygous
+         if ($s2 eq 2) {
+            $ad++; $an++;
+            $paircode_count{'12'}++;
+         } elsif ($s2 eq 0) {
+            $ad++; $an++;
+            $paircode_count{'10'}++;
+         } else {               # s2 is heterozygous
+            $ad++;
+            $paircode_count{'11'}++;
+         }
+      }
+   }
+#   my $hgmr = ($hd > 0)? $hn/$hd : '---';
+#   print  "hgmr: $hgmr \n";
+   return ($an, $ad, $hn, $hd, \%paircode_count); 
 }
 
 

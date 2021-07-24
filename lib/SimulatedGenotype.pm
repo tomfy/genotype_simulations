@@ -9,9 +9,10 @@ sub new_from_mafs{
   my $mafs = shift;		# array ref of maf values
   my $n_snps = scalar @$mafs;
   my $generation = shift;
-  my $id = shift;		     #  scalar 
+  my $id = shift;		       #  scalar 
   my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
-  # print STDERR "$the_rng ; $maf ;  $n_snps \n";
+#  print STDERR "$the_rng ; $mafs ;  $n_snps \n";
+#  print STDERR join(" ", @$mafs), "\n";
 
   $self->set_rng($the_rng);
   $self->set_generation($generation);
@@ -22,11 +23,12 @@ sub new_from_mafs{
   $self->set_max_pedigree_depth($max_pedigree_depth);
 
   my $alleles = $self->draw_alleles($mafs); # an array ref holding 2*$n_snps alleles.
-#  my @genotypes = ();
+#  print STDERR "Alleles:  ", join(" ", @$alleles), "\n";
+  #  my @genotypes = ();
   my $gtstring = '';
   for my $i_snp (0..$n_snps-1) {
     my $gt =  $alleles->[2*$i_snp] . $alleles->[2*$i_snp + 1]; # [$alleles->[2*$i_snp], $alleles->[2*$i_snp + 1]];
-  #  push @genotypes, $gt;
+    #  push @genotypes, $gt;
     # if($gt eq 'AA'){ # AA <-> 0
     # 	$gtstring .= '0'
     # }elsif($gt eq 'Aa' or $gt eq 'aA'){ # hetrozygous <-> 1
@@ -38,13 +40,13 @@ sub new_from_mafs{
     # }
     $gtstring .= allele_pair_to_012($gt);
   }
-  #   print "in new_from_pop. [", ref \@genotypes, "] \n";
-#  $self->set_genotypes(\@genotypes); # e.g. ['AA','Aa','AA', 'aa']
+#  print STDERR "in new_from_mafs. [", ref \@genotypes, "] \n";
+  $self->set_genotypes(\@genotypes); # e.g. ['AA','Aa','AA', 'aa']
   $self->set_gtstring($gtstring); # e.g. "0112"
-#  print "new from maf: gtstring: $gtstring\n";
+#  print STDERR "new from maf: gtstring: ", $self->get_gtstring, "\n";
   #   print "in new_from_pop. [", ref $self->get_genotypes(), "] \n";
   # $$id++;			# increment the id number.
-#  die "$id is $$id \n" if($$id > 8);
+  #  die "$id is $$id \n" if($$id > 8);
   return $self;
 }
 
@@ -55,12 +57,12 @@ sub new_offspring{
   my $pgobj1 = shift;		# parent genotype obj. 1
   my $pgobj2 = shift;		# parent genotype obj. 2
   my $generation = shift;
-  my $id = shift;			# ref to scalar
+  my $id = shift;		       # ref to scalar
   my $max_pedigree_depth = shift // 2; # 2 -> keep just back to grandparents, etc.
-#  my @genotypes = ();
+  #  my @genotypes = ();
   my $gtstring = '';
-#  my $pg1 = $pgobj1->get_genotypes();
-#  my $pg2 = $pgobj2->get_genotypes();
+  #  my $pg1 = $pgobj1->get_genotypes();
+  #  my $pg2 = $pgobj2->get_genotypes();
   my $pgs1 = $pgobj1->get_gtstring();
   my $pgs2 = $pgobj2->get_gtstring();
   die "number of snps is different in the 2 parents. bye. \n" if(scalar @$pg1 != scalar @$pg2);
@@ -93,17 +95,17 @@ sub new_offspring{
   # #  $gtstring .= allele_pair_to_012($og)
   # }
 
- #  print "length of pgs1: ", length $pgs1, "\n";
+  #  print "length of pgs1: ", length $pgs1, "\n";
   for (my $i=0; $i < length $pgs1; $i++) {
     my $gt1 = substr($pgs1, $i, 1);
     my $gt2 = substr($pgs2, $i, 1);
     my $apair = from_012_to_A_or_a($gt1, $the_rng) . from_012_to_A_or_a($gt2, $the_rng);
-   $gtstring .= allele_pair_to_012($apair);
+    $gtstring .= allele_pair_to_012($apair);
   }
      
   # $self->set_genotypes(\@genotypes);
   $self->set_gtstring($gtstring);
- # $$id++;			# increment the id number;
+  # $$id++;			# increment the id number;
   return $self;
 }
   
@@ -141,7 +143,7 @@ sub new_from_012string{
   #   }
   # }
   #  print STDERR '[', join(", ", @genotypes), "]\n";
-#  $self->set_genotypes(\@genotypes);
+  #  $self->set_genotypes(\@genotypes);
   $self->set_gtstring($string);
   return $self;
 }
@@ -153,7 +155,7 @@ sub chunkwise_matching{
 
   my $s1 = $self->genotype_012string();
   my $s2 = $other_genotype->genotype_012string();
-  # print STDERR "[$chunk_size] \n [$s1] \n [$s2] \n";
+  print STDERR "[$chunk_size] \n [$s1] \n [$s2] \n";
   my ($eq_count, $ne_count) = (0, 0);
   while (length $s1 >= $chunk_size) {
     my $ch1 = substr($s1, 0, $chunk_size, '');
@@ -187,19 +189,19 @@ sub draw_alleles{
 sub genotype_Aa_string{
   my $self = shift;
   my $separator = shift // '';
-#  my $gt = $self->get_genotypes();
+  #  my $gt = $self->get_genotypes();
   # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
 
   my $gtAastring = '';
   while (my($i, $snp012) = each @{$self->get_gtstring()}) {
     my $snpA;
-    if($snp012 eq '0'){
+    if ($snp012 eq '0') {
       $snpA = 'AA';
-    }elsif($snp012 eq '1'){
+    } elsif ($snp012 eq '1') {
       $snpA = 'Aa';
-    }elsif($snp012 eq '2'){
+    } elsif ($snp012 eq '2') {
       $snpA = 'aa';
-    }else{
+    } else {
 
     }
     $gtAastring .= $snpA . $separator;
@@ -208,24 +210,24 @@ sub genotype_Aa_string{
   return $gtAastring;
 }
 
-# sub genotype_012string{         # AA->0, aA, Aa -> 1, aa->2
-#   my $self = shift;
-#   my $separator = shift // '';
-#   my $gt = $self->get_genotypes();
-#   # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
-#   my $gstring = '';
-#   while (my($i, $snp) = each @$gt) {
-#     # my $snp = $s; # join('', @$s);
-#     if ($snp eq 'AA') {
-#       $gstring .= '0' . $separator;
-#     } elsif ($snp eq 'aa') {
-#       $gstring .= '2' . $separator;
-#     } else {			# aA or Aa
-#       $gstring .= '1' . $separator;
-#     }
-#   }
-#   return $gstring;
-# }
+sub genotype_012string{         # AA->0, aA, Aa -> 1, aa->2
+  my $self = shift;
+  my $separator = shift // '';
+  my $gt = $self->get_genotypes();
+  # print "ref gt: ", ref $gt, "  ", scalar @$gt, "\n";
+  my $gstring = '';
+  while (my($i, $snp) = each @$gt) {
+    # my $snp = $s; # join('', @$s);
+    if ($snp eq 'AA') {
+      $gstring .= '0' . $separator;
+    } elsif ($snp eq 'aa') {
+      $gstring .= '2' . $separator;
+    } else {			# aA or Aa
+      $gstring .= '1' . $separator;
+    }
+  }
+  return $gstring;
+}
 
 sub fasta{			# 
   my $self = shift;
@@ -272,16 +274,16 @@ sub get_rng{
   return $self->{rng};
 }
 
-# sub set_genotypes{
-#   my $self = shift;
-#   my $genotypes = shift;
-#   $self->{genotypes} = $genotypes;
-# }
+sub set_genotypes{
+  my $self = shift;
+  my $genotypes = shift;
+  $self->{genotypes} = $genotypes;
+}
 
-# sub get_genotypes{
-#   my $self = shift;
-#   return $self->{genotypes};
-# }
+sub get_genotypes{
+  my $self = shift;
+  return $self->{genotypes};
+}
 
 sub set_gtstring{
   my $self = shift;
